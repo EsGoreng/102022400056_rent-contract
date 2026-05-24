@@ -1,8 +1,11 @@
 <?php
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,5 +18,23 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) { // ← tangkap NotFoundHttpException
+            if ($request->expectsJson() || $request->is('api/*')) {
+                $previous = $e->getPrevious(); // ← ambil exception aslinya
+
+                $message = $previous instanceof ModelNotFoundException
+                    ? class_basename($previous->getModel()).' not found'
+                    : 'Resource not found';
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $message,
+                    'errors' => $e->getMessage(),
+                    'meta' => [
+                        'service_name' => 'Rent-Contract-Service',
+                        'api_version' => 'v1',
+                    ],
+                ], 404);
+            }
+        });
     })->create();
