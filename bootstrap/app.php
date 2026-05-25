@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ValidateApiKey;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,12 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'api.key' => ValidateApiKey::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (NotFoundHttpException $e, Request $request) { // ← tangkap NotFoundHttpException
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($request->expectsJson() || $request->is('api/*')) {
-                $previous = $e->getPrevious(); // ← ambil exception aslinya
+                $previous = $e->getPrevious();
 
                 $message = $previous instanceof ModelNotFoundException
                     ? class_basename($previous->getModel()).' not found'

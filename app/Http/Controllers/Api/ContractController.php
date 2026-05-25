@@ -7,12 +7,122 @@ use App\Http\Requests\StoreContractRequest;
 use App\Http\Resources\ContractResource;
 use App\Models\Contract;
 use Illuminate\Http\JsonResponse;
+use OpenApi\Attributes as OA;
 
+// ── Schema: Tenant (nested object) ──────────────────────────────────────────
+#[OA\Schema(
+    schema: 'TenantObject',
+    properties: [
+        new OA\Property(property: 'id', type: 'string', format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000'),
+        new OA\Property(property: 'name', type: 'string', example: 'Budi Santoso'),
+        new OA\Property(property: 'email', type: 'string', example: 'budi@example.com'),
+    ]
+)]
+
+// ── Schema: ContractResource ─────────────────────────────────────────────────
+#[OA\Schema(
+    schema: 'ContractResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'string', format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000'),
+        new OA\Property(property: 'tenant_id', type: 'string', format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440001'),
+        new OA\Property(property: 'listing_id', type: 'string', format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440002'),
+        new OA\Property(property: 'start_date', type: 'string', format: 'date', example: '2024-01-01'),
+        new OA\Property(property: 'end_date', type: 'string', format: 'date', example: '2024-12-31'),
+        new OA\Property(property: 'is_active', type: 'boolean', example: true),
+        new OA\Property(
+            property: 'status',
+            type: 'string',
+            enum: ['DRAFT', 'ACTIVE', 'EXPIRED', 'TERMINATED'],
+            example: 'DRAFT'
+        ),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2024-01-01T00:00:00Z'),
+        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2024-01-01T00:00:00Z'),
+        new OA\Property(property: 'tenant', ref: '#/components/schemas/TenantObject'),
+    ]
+)]
+
+// ── Schema: ContractRequest (body for store/update) ──────────────────────────
+#[OA\Schema(
+    schema: 'ContractRequest',
+    required: ['tenant_id', 'listing_id', 'start_date', 'end_date'],
+    properties: [
+        new OA\Property(property: 'tenant_id', type: 'string', format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440001'),
+        new OA\Property(property: 'listing_id', type: 'string', format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440002'),
+        new OA\Property(property: 'start_date', type: 'string', format: 'date', example: '2024-01-01'),
+        new OA\Property(property: 'end_date', type: 'string', format: 'date', example: '2024-12-31'),
+        new OA\Property(property: 'is_active', type: 'boolean', example: false),
+        new OA\Property(
+            property: 'status',
+            type: 'string',
+            enum: ['DRAFT', 'ACTIVE', 'EXPIRED', 'TERMINATED'],
+            example: 'DRAFT'
+        ),
+    ]
+)]
+
+// ── Schema: ApiMeta ──────────────────────────────────────────────────────────
+#[OA\Schema(
+    schema: 'ApiMeta',
+    properties: [
+        new OA\Property(property: 'service_name', type: 'string', example: 'Rent-Contract-Service'),
+        new OA\Property(property: 'api_version', type: 'string', example: 'v1'),
+    ]
+)]
+
+// ── Schema: SuccessCollectionResponse ────────────────────────────────────────
+#[OA\Schema(
+    schema: 'SuccessCollectionResponse',
+    properties: [
+        new OA\Property(property: 'success', type: 'boolean', example: true),
+        new OA\Property(property: 'message', type: 'string', example: 'Data retrieved successfully'),
+        new OA\Property(
+            property: 'data',
+            type: 'array',
+            items: new OA\Items(ref: '#/components/schemas/ContractResource')
+        ),
+        new OA\Property(property: 'meta', ref: '#/components/schemas/ApiMeta'),
+    ]
+)]
+
+// ── Schema: SuccessSingleResponse ────────────────────────────────────────────
+#[OA\Schema(
+    schema: 'SuccessSingleResponse',
+    properties: [
+        new OA\Property(property: 'success', type: 'boolean', example: true),
+        new OA\Property(property: 'message', type: 'string', example: 'Data retrieved successfully'),
+        new OA\Property(property: 'data', ref: '#/components/schemas/ContractResource'),
+        new OA\Property(property: 'meta', ref: '#/components/schemas/ApiMeta'),
+    ]
+)]
+
+// ── Schema: ErrorResponse ────────────────────────────────────────────────────
+#[OA\Schema(
+    schema: 'ErrorResponse',
+    properties: [
+        new OA\Property(property: 'success', type: 'boolean', example: false),
+        new OA\Property(property: 'message', type: 'string', example: 'Unable to process request'),
+        new OA\Property(property: 'data', nullable: true, example: null),
+        new OA\Property(property: 'meta', ref: '#/components/schemas/ApiMeta'),
+    ]
+)]
+
+#[OA\Tag(name: 'Contracts', description: 'API Endpoints for managing contracts')]
 class ContractController extends Controller
 {
-    /**
-     * Display a listing of all contracts with eager loaded tenant.
-     */
+    #[OA\Get(
+        path: '/api/v1/contracts',
+        summary: 'Get all contracts',
+        security: [['bearerAuth' => [], 'apiKeyAuth' => []]],
+        tags: ['Contracts'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Contracts retrieved successfully',
+                content: new OA\JsonContent(ref: '#/components/schemas/SuccessCollectionResponse')
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function index(): JsonResponse
     {
         $contracts = Contract::with('tenant')->orderByDesc('created_at')->get();
@@ -24,9 +134,25 @@ class ContractController extends Controller
         );
     }
 
-    /**
-     * Store a newly created contract in storage.
-     */
+    #[OA\Post(
+        path: '/api/v1/contracts',
+        summary: 'Create a new contract',
+        security: [['bearerAuth' => [], 'apiKeyAuth' => []]],
+        tags: ['Contracts'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: '#/components/schemas/ContractRequest')
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Contract created successfully',
+                content: new OA\JsonContent(ref: '#/components/schemas/SuccessSingleResponse')
+            ),
+            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function store(StoreContractRequest $request): JsonResponse
     {
         $contract = Contract::create($request->validated());
@@ -38,9 +164,30 @@ class ContractController extends Controller
         );
     }
 
-    /**
-     * Display the specified contract.
-     */
+    #[OA\Get(
+        path: '/api/v1/contracts/{id}',
+        summary: 'Get a specific contract',
+        security: [['bearerAuth' => [], 'apiKeyAuth' => []]],
+        tags: ['Contracts'],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                in: 'path',
+                required: true,
+                description: 'UUID of the contract',
+                schema: new OA\Schema(type: 'string', format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Contract retrieved successfully',
+                content: new OA\JsonContent(ref: '#/components/schemas/SuccessSingleResponse')
+            ),
+            new OA\Response(response: 404, description: 'Contract not found'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function show(Contract $contract): JsonResponse
     {
         $contract->load('tenant');
@@ -52,18 +199,44 @@ class ContractController extends Controller
         );
     }
 
-    /**
-     * Update the specified contract in storage.
-     */
+    #[OA\Put(
+        path: '/api/v1/contracts/{id}',
+        summary: 'Update a contract',
+        security: [['bearerAuth' => [], 'apiKeyAuth' => []]],
+        tags: ['Contracts'],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                in: 'path',
+                required: true,
+                description: 'UUID of the contract',
+                schema: new OA\Schema(type: 'string', format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000')
+            ),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: '#/components/schemas/ContractRequest')
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Contract updated successfully',
+                content: new OA\JsonContent(ref: '#/components/schemas/SuccessSingleResponse')
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Failed to update',
+                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
+            ),
+            new OA\Response(response: 404, description: 'Contract not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function update(StoreContractRequest $request, Contract $contract): JsonResponse
     {
         if (! $contract->update($request->validated())) {
-            return $this->errorResponse(
-                'Unable to update contract',
-                500,
-                null,
-                $this->apiMeta()
-            );
+            return $this->errorResponse('Unable to update contract', 500, null, $this->apiMeta());
         }
 
         return $this->successResponse(
@@ -73,18 +246,39 @@ class ContractController extends Controller
         );
     }
 
-    /**
-     * Remove the specified contract from storage.
-     */
+    #[OA\Delete(
+        path: '/api/v1/contracts/{id}',
+        summary: 'Delete a contract',
+        security: [['bearerAuth' => [], 'apiKeyAuth' => []]],
+        tags: ['Contracts'],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                in: 'path',
+                required: true,
+                description: 'UUID of the contract',
+                schema: new OA\Schema(type: 'string', format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Contract deleted successfully',
+                content: new OA\JsonContent(ref: '#/components/schemas/SuccessSingleResponse')
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Failed to delete',
+                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
+            ),
+            new OA\Response(response: 404, description: 'Contract not found'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function destroy(Contract $contract): JsonResponse
     {
         if (! $contract->delete()) {
-            return $this->errorResponse(
-                'Unable to delete contract',
-                500,
-                null,
-                $this->apiMeta()
-            );
+            return $this->errorResponse('Unable to delete contract', 500, null, $this->apiMeta());
         }
 
         return $this->successResponse(
