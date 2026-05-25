@@ -5,8 +5,8 @@ type Tenant {
     id: ID!
     name: String!
     email: String!
-    phone: String!
-    nik: String!
+    phone: String
+    nik: String
     contracts: [Contract!]! @hasMany
     contracts_count: Int! @count(relation: "contracts")
     created_at: DateTime!
