@@ -69,6 +69,15 @@
                     </span>
                     di Telkom University
                 </p>
+                <p>
+                    Buka dokumentasi di
+                    <span class="text-zinc-800 text-sm md:text-base leading-relaxed">
+                        <a href="https://github.com/EsGoreng/102022400056_rent-contract" target="_blank"
+                            class="underline">
+                            https://github.com/EsGoreng/102022400056_rent-contract
+                        </a>
+                    </span>
+                </p>
             </div>
             <div class="space-y-2 animate-fade" style="animation-delay: 1s;">
                 <p class="text-zinc-500 text-xs uppercase tracking-[0.2em]">

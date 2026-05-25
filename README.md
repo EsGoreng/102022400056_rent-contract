@@ -1,58 +1,136 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Dual API: REST & GraphQL
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![Laravel Version](https://img.shields.io/badge/Laravel-11.x-FF2D20.svg?style=flat-square&logo=laravel)](https://laravel.com)
+[![PHP Version](https://img.shields.io/badge/PHP-%3E%3D%208.3-777BB4.svg?style=flat-square&logo=php)](https://php.net)
+[![Swagger](https://img.shields.io/badge/Swagger-Supported-85EA2D.svg?style=flat-square&logo=swagger)](https://swagger.io/)
+[![GraphQL](https://img.shields.io/badge/GraphQL-Lighthouse-E10098.svg?style=flat-square&logo=graphql)](https://graphql.org/)
 
-## About Laravel
+Project ini merupakan implementasi API modern menggunakan _framework_ Laravel yang mendukung dua arsitektur sekaligus: **REST API** dan **GraphQL**. Project ini dilengkapi dengan antarmuka dokumentasi interaktif (Swagger UI) dan _playground_ (GraphiQL) untuk memudahkan proses _testing_ dan integrasi oleh _frontend developer_ atau klien.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **RESTful API**: Struktur standar REST.
+- **GraphQL API**: Fleksibilitas pengambilan data menggunakan Lighthouse.
+- **Swagger UI**: Dokumentasi REST API yang interaktif.
+- **GraphiQL Playground**: mengeksplorasi dan menguji _query_ GraphQL secara langsung.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Teknologi & Library
 
-## Learning Laravel
+Project ini dibangun menggunakan _stack_ dan _dependency_ berikut:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **[Laravel](https://laravel.com/)** - Core Framework
+- **[Swagger PHP](https://github.com/zircote/swagger-php)** (`zircote/swagger-php`) - Anotasi standar OpenAPI
+- **[L5 Swagger](https://github.com/DarkaOnLine/L5-Swagger)** (`darkaonline/l5-swagger`) - Integrasi Swagger ke Laravel
+- **[Lighthouse GraphQL](https://lighthouse-php.com/)** (`nuwave/lighthouse`) - Server GraphQL untuk Laravel
+- **[Laravel GraphiQL](https://github.com/mll-lab/laravel-graphiql)** (`mll-lab/laravel-graphiql`) - UI Playground untuk GraphQL
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Persyaratan Sistem
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Sebelum menjalankan project ini, pastikan sistem Anda memiliki:
 
-## Agentic Development
+- PHP >= 8.3
+- Composer
+- Database Server SQLite
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Instalasi
+
+Ikuti langkah-langkah di bawah ini untuk menjalankan project secara lokal di mesin Anda:
+
+1. **Clone repositori ini**
+    ```bash
+    git clone https://github.com/EsGoreng/102022400056_rent-contract.git
+    cd 102022400056_rent-contract
+    ```
+2. **Install dependency Composer**
+    ```bash
+    composer install
+    ```
+3. **Salin file environment**
+    ```bash
+    cp .env.example .env
+    ```
+4. **Konfigurasi Database**
+
+    Buka file .env dan sesuaikan kredensial database Anda:
+
+    ```bash
+    DB_CONNECTION=sqlite
+    #DB_HOST=127.0.0.1
+    #DB_PORT=3306
+    #DB_DATABASE=nama_database
+    #DB_USERNAME=root
+    #DB_PASSWORD=DB_CONNECTION=mysql
+    ```
+
+5. **Generate Application Key**
+    ```bash
+    php artisan key:generate
+    ```
+6. **Jalankan Migrasi dan Seeder**
+    ```bash
+    php artisan migrate --seed
+    ```
+7. **Jalankan Local Development Server**
+    ```bash
+    composer run dev
+    ```
+
+## Dokumentasi & Penggunaan API
+
+1. **REST API (Swagger UI)**
+
+    Service ini menggunakan L5 Swagger untuk mengelola dokumentasi REST API berdasarkan anotasi di dalam controller.
+    - Akses UI Dokumentasi: http://localhost:8000/api/v1/documentation
+
+    - Generate ulang dokumentasi:
+
+        Setiap kali Anda mengubah atau menambahkan anotasi OpenAPI di controller, jalankan perintah ini untuk memperbarui tampilan UI:
+
+        ```bash
+        php artisan l5-swagger:generate
+        ```
+
+2. **GraphQL (Lighthouse & GraphiQL)**
+
+    Skema GraphQL didefinisikan di dalam folder graphql/schema.graphql.
+    - GraphQL Endpoint API Utama: http://localhost:8000/graphql (Gunakan endpoint ini untuk komunikasi dari aplikasi client).
+
+    - Akses GraphiQL Playground: http://localhost:8000/graphiql
+      Buka URL di atas melalui browser untuk mulai menulis query dan mengeksplorasi skema (Docs) yang tersedia.
+
+3. **Konfigurasi API Key (Autentikasi)**
+   Project ini membutuhkan API Key untuk mengakses beberapa endpoint. Anda dapat menggunakan credential _default_ atau membuat key baru:
+    - **Menggunakan Default Key (NIM):**
+      Buka Swagger UI di http://localhost:8000/api/v1/documentation lalu masukan NIM berikut:
+        ```
+        102022400056
+        ```
+    - **Men-generate Key Baru:**
+      Jalankan perintah berikut pada terminal:
+        ```bash
+        php artisan apikey:generate
+        ```
+        Salin (_copy_) teks token hasil generate yang muncul di terminal, lalu tempel (_paste_) ke dalam file `.env`:
+        ```
+        API_KEY=isi_dengan_hasil_generate_tadi
+        ```
+
+---
+
+### Menjalankan dengan Docker
+
+Jika Anda lebih memilih menggunakan Docker agar tidak perlu menginstal PHP, Composer, atau database secara lokal di mesin Anda, project ini sudah menyediakan konfigurasi Docker Compose.
+
+Pastikan Docker Desktop/Daemon Anda sudah aktif, lalu jalankan perintah berikut di terminal:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+docker compose up -d
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Perintah di atas akan mengunduh image, membangun (build) container, dan menjalankan server di latar belakang (detached mode). Setelah proses selesai, aplikasi beserta seluruh layatannya dapat langsung diakses melalui http://localhost:8000.
 
-## Contributing
+Untuk menghentikan container, Anda cukup menjalankan perintah:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+docker compose down
+```
