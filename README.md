@@ -1,11 +1,11 @@
-# Laravel Dual API: REST & GraphQL
+# Laravel : Rent Contract Services
 
 [![Laravel Version](https://img.shields.io/badge/Laravel-11.x-FF2D20.svg?style=flat-square&logo=laravel)](https://laravel.com)
 [![PHP Version](https://img.shields.io/badge/PHP-%3E%3D%208.3-777BB4.svg?style=flat-square&logo=php)](https://php.net)
 [![Swagger](https://img.shields.io/badge/Swagger-Supported-85EA2D.svg?style=flat-square&logo=swagger)](https://swagger.io/)
 [![GraphQL](https://img.shields.io/badge/GraphQL-Lighthouse-E10098.svg?style=flat-square&logo=graphql)](https://graphql.org/)
 
-Project ini merupakan implementasi API modern menggunakan _framework_ Laravel yang mendukung dua arsitektur sekaligus: **REST API** dan **GraphQL**. Project ini dilengkapi dengan antarmuka dokumentasi interaktif (Swagger UI) dan _playground_ (GraphiQL) untuk memudahkan proses _testing_ dan integrasi oleh _frontend developer_ atau klien.
+Project ini merupakan implementasi API modern menggunakan _framework_ Laravel. Project ini dilengkapi dengan antarmuka dokumentasi interaktif (Swagger UI) dan _playground_ (GraphiQL) untuk memudahkan proses _testing_ dan integrasi oleh _frontend developer_ atau klien.
 
 ## Fitur Utama
 
