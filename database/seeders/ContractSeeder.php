@@ -8,9 +8,6 @@ use Illuminate\Database\Seeder;
 
 class ContractSeeder extends Seeder
 {
-    /**
-     * Run the contract seeds.
-     */
     public function run(): void
     {
         $tenants = Tenant::all();
@@ -22,5 +19,18 @@ class ContractSeeder extends Seeder
         foreach ($tenants as $tenant) {
             Contract::factory()->count(3)->create(['tenant_id' => $tenant->id]);
         }
+
+        // Print sample UUIDs untuk testing di Swagger
+        $this->command->info('');
+        $this->command->info('=== Sample UUIDs untuk Testing Swagger ===');
+
+        Tenant::select('id', 'name', 'email')->limit(3)->get()
+            ->each(fn ($t) => $this->command->info("Tenant  → {$t->id}  ({$t->name})"));
+
+        Contract::select('id', 'tenant_id', 'listing_id', 'status')->limit(3)->get()
+            ->each(fn ($c) => $this->command->info("Contract → {$c->id}  [tenant: {$c->tenant_id}]  listing: {$c->listing_id}  status: {$c->status}"));
+
+        $this->command->info('==========================================');
+        $this->command->info('');
     }
 }

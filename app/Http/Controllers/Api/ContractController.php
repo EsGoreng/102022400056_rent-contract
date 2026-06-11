@@ -6,7 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreContractRequest;
 use App\Http\Resources\ContractResource;
 use App\Models\Contract;
+use App\Services\AmqpPublisherService;
+use App\Services\SoapAuditService;
+use App\Services\SsoService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use OpenApi\Attributes as OA;
 
 // ── Schema: Tenant (nested object) ──────────────────────────────────────────
@@ -156,6 +161,54 @@ class ContractController extends Controller
     public function store(StoreContractRequest $request): JsonResponse
     {
         $contract = Contract::create($request->validated());
+
+        // ── Modul 2: SOAP Audit ──
+        $bearerToken = Cache::get('iae_m2m_token');
+
+        if (! $bearerToken) {
+            try {
+                $bearerToken = app(SsoService::class)->loginM2M();
+            } catch (\Exception $e) {
+                Log::warning('[Contract] Gagal ambil M2M token, SOAP audit dilewati', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($bearerToken) {
+            $receiptNumber = app(SoapAuditService::class)
+                ->auditContract($contract->toArray(), $bearerToken);
+
+            if ($receiptNumber) {
+                Log::debug('Saving receipt', ['receipt' => $receiptNumber, 'contract_id' => $contract->id]);
+                
+                $updated = $contract->update([
+                    'soap_receipt_number' => $receiptNumber,
+                    'soap_audited_at'     => now(),
+                ]);
+                
+                Log::debug('Update result', ['updated' => $updated]);
+                
+                $contract->refresh();
+            }
+        }
+
+        // ── Modul 3: AMQP Publisher ──
+        if ($bearerToken) {
+            app(AmqpPublisherService::class)->publishViaHttp(
+                'ContractCreated',
+                [
+                    'activity_name' => 'ContractCreated',
+                    'contract_id'   => $contract->id,
+                    'tenant_id'     => $contract->tenant_id,
+                    'listing_id'    => $contract->listing_id,
+                    'status'        => $contract->status,
+                    'receipt_ref'   => $contract->soap_receipt_number,
+                    'timestamp'     => now()->toIso8601String(),
+                ],
+                $bearerToken
+            );
+        }
 
         return $this->successResponse(
             new ContractResource($contract->load('tenant')),

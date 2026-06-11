@@ -18,16 +18,12 @@ class SsoService
 
     public function __construct()
     {
-        $this->baseUrl = env('CENTRAL_SERVER_URL', 'https://iae-sso.virtualfri.id/');
-        $this->apiKey  = env('CENTRAL_TEAM_API_KEY', 'KEY-MHS-01');
+        $this->baseUrl = env('CENTRAL_SERVER_URL');
+        $this->apiKey  = env('CENTRAL_TEAM_API_KEY');
     }
 
     // =========================================================
     // 1. LOGIN M2M — Aplikasi Laravel minta token ke SSO
-    //
-    //  Response asli server Pa Eki:
-    //  { "status":"success", "token_type":"m2m", "token":"eyJ...",
-    //    "app": { "client_id":"KEY-MHS-01", "name":"...", "team":"TEAM-01" } }
     // =========================================================
     public function loginM2M(): string
     {
@@ -40,9 +36,11 @@ class SsoService
             throw new RuntimeException('SSO M2M login gagal: ' . $response->body());
         }
 
-        // Key response dari Pa Eki adalah "token" (bukan "access_token")
         $token = $response->json('token')
             ?? throw new RuntimeException('Token tidak ditemukan di response SSO');
+
+        $ttl = $response->json('expires_in', 3600);
+        Cache::put('iae_m2m_token', $token, $ttl);
 
         Log::info('[SSO] M2M login berhasil', [
             'app_name' => $response->json('app.name'),
@@ -54,11 +52,6 @@ class SsoService
 
     // =========================================================
     // 2. LOGIN USER — End-user (warga/mahasiswa) login via SSO
-    //
-    //  Response asli server Pa Eki:
-    //  { "status":"success", "token_type":"user", "token":"eyJ...",
-    //    "profile": { "name":"Ahmad Rizki Pratama", "nim":"2026000001",
-    //                 "email":"warga01@ktp.iae.id" } }
     // =========================================================
     public function loginUser(string $email, string $password): array
     {
@@ -117,19 +110,6 @@ class SsoService
     // =========================================================
     // 4. MAP TO LOCAL ROLE — Inti penilaian Modul 1
     //    Menentukan role lokal berdasarkan data dari JWT
-    //
-    //  Struktur payload JWT dari Pa Eki:
-    //
-    //  M2M token:
-    //  { "iss":"iae-central-mock", "sub":"KEY-MHS-01", "iat":..., "exp":...,
-    //    "grant_type":"client_credentials", "token_type":"m2m",
-    //    "app": { "client_id":"KEY-MHS-01", "name":"...", "team":"TEAM-01" } }
-    //
-    //  User token:
-    //  { "iss":"iae-central-mock", "sub":"warga01@ktp.iae.id", "iat":..., "exp":...,
-    //    "grant_type":"password", "token_type":"user",
-    //    "profile": { "name":"Ahmad Rizki Pratama", "nim":"2026000001",
-    //                 "email":"warga01@ktp.iae.id" } }
     // =========================================================
     public function mapToLocalRole(string $rawToken, array $payload): SsoUser
     {
@@ -160,9 +140,6 @@ class SsoService
         }
 
         // --- Logika penentuan role lokal ---
-        // Karena JWT dari Pa Eki tidak menyertakan role,
-        // kita tentukan sendiri berdasarkan aturan bisnis:
-        //
         //  - token_type = 'm2m'     → admin (akses service-to-service)
         //  - email domain tertentu  → bisa dikustomisasi
         //  - default                → tenant (penyewa)
@@ -234,12 +211,6 @@ class SsoService
         if ($tokenType === 'm2m') {
             return LocalRole::where('name', 'admin')->value('id');
         }
-
-        // Kamu bisa tambahkan logika custom di sini.
-        // Contoh: email tertentu jadi owner
-        // if (str_ends_with($email, '@properti.id')) {
-        //     return LocalRole::where('name', 'owner')->value('id');
-        // }
 
         // Default: semua user login biasa → role tenant (penyewa)
         return LocalRole::where('name', 'tenant')->value('id');

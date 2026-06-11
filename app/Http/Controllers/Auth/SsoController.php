@@ -13,9 +13,6 @@ class SsoController extends Controller
 
     /**
      * POST /api/v1/auth/sso/login
-     *
-     * Login end-user (warga/mahasiswa) via SSO Pa Eki.
-     * Gunakan credential dari config/citizens.php milik Pa Eki:
      * email: warga01@ktp.iae.id | password: KtpDigital2026!
      */
     public function login(Request $request): JsonResponse
@@ -59,9 +56,6 @@ class SsoController extends Controller
 
     /**
      * GET /api/v1/auth/sso/me
-     *
-     * Ambil profil user yang sedang login (butuh JWT di header).
-     * Route ini harus diproteksi dengan middleware VerifyJwtToken.
      */
     public function me(Request $request): JsonResponse
     {

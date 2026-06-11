@@ -28,6 +28,8 @@ class ContractResource extends JsonResource
                 'email' => $this->tenant?->email,
                 'phone' => $this->tenant?->phone,
             ],
+            'soap_receipt_number' => $this->soap_receipt_number,
+            'soap_audited_at'     => $this->soap_audited_at,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

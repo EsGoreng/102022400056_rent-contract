@@ -23,8 +23,9 @@ class Contract extends Model
         'end_date',
         'is_active',
         'status',
+        'soap_receipt_number',
+        'soap_audited_at',
     ];
-
     /**
      * Casting tipe data agar nilai dari database otomatis diubah
      * ke tipe data native PHP/Carbon saat diakses.

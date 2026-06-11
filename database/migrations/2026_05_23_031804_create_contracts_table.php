@@ -22,6 +22,9 @@ return new class extends Migration
             $table->boolean('is_active')->default(false);
             $table->enum('status', ['DRAFT', 'ACTIVE', 'EXPIRED', 'TERMINATED'])->default('DRAFT');
 
+            $table->string('soap_receipt_number')->nullable();
+            $table->timestamp('soap_audited_at')->nullable();
+
             $table->timestamps();
         });
     }

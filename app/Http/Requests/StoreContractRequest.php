@@ -21,14 +21,14 @@ class StoreContractRequest extends FormRequest
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-    {
-        return [
-            'tenant_id' => ['required', 'string', 'exists:tenants,id'],
-            'listing_id' => ['required', 'string'],
-            'start_date' => ['required', 'date'],
-            'end_date' => ['required', 'date', 'after:start_date'],
-            'status' => ['required', 'string'],
-            'is_active' => ['sometimes', 'boolean'],
-        ];
-    }
+        {
+            return [
+                'tenant_id'  => ['required', 'string', 'exists:tenants,id'],
+                'listing_id' => ['required', 'string', 'uuid'],
+                'start_date' => ['required', 'date'],
+                'end_date'   => ['required', 'date', 'after:start_date'],
+                'status'     => ['required', 'string', 'in:DRAFT,ACTIVE,EXPIRED,TERMINATED'],
+                'is_active'  => ['sometimes', 'boolean'],
+            ];
+        }
 }
