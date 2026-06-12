@@ -90,22 +90,22 @@ class SsoService
     // 3. VERIFY JWT — Validasi token dengan public key dari JWKS
     // =========================================================
     public function decodeAndVerify(string $token): array
-{
-    $jwks = $this->getPublicKeys();
+    {
+        $jwks = $this->getPublicKeys();
 
-    try {
-        // Tambahkan leeway 300 detik (5 menit) untuk toleransi clock skew
-        JWT::$leeway = 300;
+        try {
+            // Tambahkan leeway 300 detik (5 menit) untuk toleransi clock skew
+            JWT::$leeway = 300;
 
-        $keys    = JWK::parseKeySet($jwks);
-        $decoded = JWT::decode($token, $keys);
+            $keys    = JWK::parseKeySet($jwks);
+            $decoded = JWT::decode($token, $keys);
 
-        return (array) $decoded;
-    } catch (\Exception $e) {
-        Log::error('[SSO] JWT verification gagal', ['error' => $e->getMessage()]);
-        throw new RuntimeException('Token tidak valid: ' . $e->getMessage());
+            return (array) $decoded;
+        } catch (\Exception $e) {
+            Log::error('[SSO] JWT verification gagal', ['error' => $e->getMessage()]);
+            throw new RuntimeException('Token tidak valid: ' . $e->getMessage());
+        }
     }
-}
 
     // =========================================================
     // 4. MAP TO LOCAL ROLE — Inti penilaian Modul 1
