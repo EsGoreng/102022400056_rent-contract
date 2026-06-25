@@ -15,7 +15,7 @@ class ValidateApiKey
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $apiKey = $request->header('X-API-KEY');
+        $apiKey = $request->header('X-IAE-KEY');
 
         $validKeys = array_filter([
             config('app.api_key'),
@@ -26,7 +26,7 @@ class ValidateApiKey
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid or missing API Key',
-                'data' => null,
+                'errors' => null,
             ], 401);
         }
 

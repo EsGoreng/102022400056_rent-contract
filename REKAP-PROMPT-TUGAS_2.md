@@ -154,7 +154,7 @@ Berdasarkan log percakapan, berikut adalah ekosistem teknologi yang diidentifika
 - **Framework:** Laravel.
 - **Library/Packages:** `darkaonline/l5-swagger` (Library ekosistem Laravel), Swagger UI.
 - **Standar/Spesifikasi:** OpenAPI Specification (OAS).
-- **Keamanan/Autentikasi:** JSON Web Token (JWT), Bearer Auth, HTTP Header API Key (`X-API-KEY`), OAuth2.
+- **Keamanan/Autentikasi:** JSON Web Token (JWT), Bearer Auth, HTTP Header API Key (`X-IAE-KEY`), OAuth2.
 - **Konsep Data:** RESTful API (GET, POST, PUT, DELETE), JSON, UUID.
 
 ---
@@ -381,7 +381,7 @@ https://claude.ai/share/43ca75a5-3156-4423-9656-6183ee0e82b8
 - OpenAPI 3.0 / Swagger UI
 - RESTful API
 - Bearer Token (JWT)
-- API Key via custom header `X-API-KEY`
+- API Key via custom header `X-IAE-KEY`
 
 **Database:**
 

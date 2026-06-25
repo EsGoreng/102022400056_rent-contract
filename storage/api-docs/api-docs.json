@@ -836,7 +836,7 @@
             "apiKeyAuth": {
                 "type": "apiKey",
                 "description": "Input API Key here.",
-                "name": "X-API-KEY",
+                "name": "X-IAE-KEY",
                 "in": "header"
             }
         }

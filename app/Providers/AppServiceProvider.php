@@ -24,7 +24,7 @@ use OpenApi\Attributes as OA;
     securityScheme: 'apiKeyAuth',
     type: 'apiKey',
     in: 'header',
-    name: 'X-API-KEY',
+    name: 'X-IAE-KEY',
     description: 'Input API Key here.'
 )]
 class AppServiceProvider extends ServiceProvider

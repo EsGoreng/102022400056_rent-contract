@@ -181,14 +181,14 @@ class ContractController extends Controller
 
             if ($receiptNumber) {
                 Log::debug('Saving receipt', ['receipt' => $receiptNumber, 'contract_id' => $contract->id]);
-                
+
                 $updated = $contract->update([
                     'soap_receipt_number' => $receiptNumber,
-                    'soap_audited_at'     => now(),
+                    'soap_audited_at' => now(),
                 ]);
-                
+
                 Log::debug('Update result', ['updated' => $updated]);
-                
+
                 $contract->refresh();
             }
         }
@@ -199,12 +199,12 @@ class ContractController extends Controller
                 'ContractCreated',
                 [
                     'activity_name' => 'ContractCreated',
-                    'contract_id'   => $contract->id,
-                    'tenant_id'     => $contract->tenant_id,
-                    'listing_id'    => $contract->listing_id,
-                    'status'        => $contract->status,
-                    'receipt_ref'   => $contract->soap_receipt_number,
-                    'timestamp'     => now()->toIso8601String(),
+                    'contract_id' => $contract->id,
+                    'tenant_id' => $contract->tenant_id,
+                    'listing_id' => $contract->listing_id,
+                    'status' => $contract->status,
+                    'receipt_ref' => $contract->soap_receipt_number,
+                    'timestamp' => now()->toIso8601String(),
                 ],
                 $bearerToken
             );
