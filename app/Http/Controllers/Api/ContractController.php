@@ -125,18 +125,31 @@ class ContractController extends Controller
                 description: 'Contracts retrieved successfully',
                 content: new OA\JsonContent(ref: '#/components/schemas/SuccessCollectionResponse')
             ),
+            new OA\Response(
+                response: 500,
+                description: 'Failed to retrieve contracts',
+                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
+            ),
             new OA\Response(response: 401, description: 'Unauthenticated'),
         ]
     )]
     public function index(): JsonResponse
     {
-        $contracts = Contract::with('tenant')->orderByDesc('created_at')->get();
+        try {
+            $contracts = Contract::with('tenant')->orderByDesc('created_at')->get();
 
-        return $this->successResponse(
-            ContractResource::collection($contracts),
-            'Data retrieved successfully',
-            $this->apiMeta()
-        );
+            return $this->successResponse(
+                ContractResource::collection($contracts),
+                'Data retrieved successfully',
+                $this->apiMeta()
+            );
+        } catch (\Exception $e) {
+            Log::error('[Contract] Gagal mengambil daftar kontrak', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->errorResponse('Unable to retrieve contracts', 500, null, $this->apiMeta());
+        }
     }
 
     #[OA\Post(
@@ -154,13 +167,26 @@ class ContractController extends Controller
                 description: 'Contract created successfully',
                 content: new OA\JsonContent(ref: '#/components/schemas/SuccessSingleResponse')
             ),
+            new OA\Response(
+                response: 500,
+                description: 'Failed to create contract',
+                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
+            ),
             new OA\Response(response: 422, description: 'Validation error'),
             new OA\Response(response: 401, description: 'Unauthenticated'),
         ]
     )]
     public function store(StoreContractRequest $request): JsonResponse
     {
-        $contract = Contract::create($request->validated());
+        try {
+            $contract = Contract::create($request->validated());
+        } catch (\Exception $e) {
+            Log::error('[Contract] Gagal membuat kontrak', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->errorResponse('Unable to create contract', 500, null, $this->apiMeta());
+        }
 
         // ── Modul 2: SOAP Audit ──
         $bearerToken = Cache::get('iae_m2m_token');
@@ -176,45 +202,68 @@ class ContractController extends Controller
         }
 
         if ($bearerToken) {
-            $receiptNumber = app(SoapAuditService::class)
-                ->auditContract($contract->toArray(), $bearerToken);
+            try {
+                $receiptNumber = app(SoapAuditService::class)
+                    ->auditContract($contract->toArray(), $bearerToken);
 
-            if ($receiptNumber) {
-                Log::debug('Saving receipt', ['receipt' => $receiptNumber, 'contract_id' => $contract->id]);
+                if ($receiptNumber) {
+                    Log::debug('Saving receipt', ['receipt' => $receiptNumber, 'contract_id' => $contract->id]);
 
-                $updated = $contract->update([
-                    'soap_receipt_number' => $receiptNumber,
-                    'soap_audited_at' => now(),
+                    $updated = $contract->update([
+                        'soap_receipt_number' => $receiptNumber,
+                        'soap_audited_at' => now(),
+                    ]);
+
+                    Log::debug('Update result', ['updated' => $updated]);
+
+                    $contract->refresh();
+                }
+            } catch (\Exception $e) {
+                Log::warning('[Contract] Gagal melakukan SOAP audit', [
+                    'contract_id' => $contract->id,
+                    'error' => $e->getMessage(),
                 ]);
-
-                Log::debug('Update result', ['updated' => $updated]);
-
-                $contract->refresh();
             }
         }
 
         // ── Modul 3: AMQP Publisher ──
         if ($bearerToken) {
-            app(AmqpPublisherService::class)->publishViaHttp(
-                'ContractCreated',
-                [
-                    'activity_name' => 'ContractCreated',
+            try {
+                app(AmqpPublisherService::class)->publishViaHttp(
+                    'ContractCreated',
+                    [
+                        'activity_name' => 'ContractCreated',
+                        'contract_id' => $contract->id,
+                        'tenant_id' => $contract->tenant_id,
+                        'listing_id' => $contract->listing_id,
+                        'status' => $contract->status,
+                        'receipt_ref' => $contract->soap_receipt_number,
+                        'timestamp' => now()->toIso8601String(),
+                    ],
+                    $bearerToken
+                );
+            } catch (\Exception $e) {
+                Log::warning('[Contract] Gagal publish event ke AMQP', [
                     'contract_id' => $contract->id,
-                    'tenant_id' => $contract->tenant_id,
-                    'listing_id' => $contract->listing_id,
-                    'status' => $contract->status,
-                    'receipt_ref' => $contract->soap_receipt_number,
-                    'timestamp' => now()->toIso8601String(),
-                ],
-                $bearerToken
-            );
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
-        return $this->successResponse(
-            new ContractResource($contract->load('tenant')),
-            'Contract created successfully',
-            $this->apiMeta()
-        );
+        try {
+            return $this->successResponse(
+                new ContractResource($contract->load('tenant')),
+                'Contract created successfully',
+                $this->apiMeta()
+            );
+        } catch (\Exception $e) {
+            Log::error('[Contract] Gagal menyusun response kontrak', [
+                'contract_id' => $contract->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->errorResponse('Contract created but failed to load response', 500, null, $this->apiMeta());
+        }
     }
 
     #[OA\Get(
@@ -237,19 +286,33 @@ class ContractController extends Controller
                 description: 'Contract retrieved successfully',
                 content: new OA\JsonContent(ref: '#/components/schemas/SuccessSingleResponse')
             ),
+            new OA\Response(
+                response: 500,
+                description: 'Failed to retrieve contract',
+                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
+            ),
             new OA\Response(response: 404, description: 'Contract not found'),
             new OA\Response(response: 401, description: 'Unauthenticated'),
         ]
     )]
     public function show(Contract $contract): JsonResponse
     {
-        $contract->load('tenant');
+        try {
+            $contract->load('tenant');
 
-        return $this->successResponse(
-            new ContractResource($contract),
-            'Data retrieved successfully',
-            $this->apiMeta()
-        );
+            return $this->successResponse(
+                new ContractResource($contract),
+                'Data retrieved successfully',
+                $this->apiMeta()
+            );
+        } catch (\Exception $e) {
+            Log::error('[Contract] Gagal mengambil detail kontrak', [
+                'contract_id' => $contract->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->errorResponse('Unable to retrieve contract', 500, null, $this->apiMeta());
+        }
     }
 
     #[OA\Put(
@@ -288,15 +351,24 @@ class ContractController extends Controller
     )]
     public function update(StoreContractRequest $request, Contract $contract): JsonResponse
     {
-        if (! $contract->update($request->validated())) {
+        try {
+            if (! $contract->update($request->validated())) {
+                return $this->errorResponse('Unable to update contract', 500, null, $this->apiMeta());
+            }
+
+            return $this->successResponse(
+                new ContractResource($contract->load('tenant')),
+                'Contract updated successfully',
+                $this->apiMeta()
+            );
+        } catch (\Exception $e) {
+            Log::error('[Contract] Gagal mengupdate kontrak', [
+                'contract_id' => $contract->id,
+                'error' => $e->getMessage(),
+            ]);
+
             return $this->errorResponse('Unable to update contract', 500, null, $this->apiMeta());
         }
-
-        return $this->successResponse(
-            new ContractResource($contract->load('tenant')),
-            'Contract updated successfully',
-            $this->apiMeta()
-        );
     }
 
     #[OA\Delete(
@@ -330,15 +402,24 @@ class ContractController extends Controller
     )]
     public function destroy(Contract $contract): JsonResponse
     {
-        if (! $contract->delete()) {
+        try {
+            if (! $contract->delete()) {
+                return $this->errorResponse('Unable to delete contract', 500, null, $this->apiMeta());
+            }
+
+            return $this->successResponse(
+                new ContractResource($contract),
+                'Contract deleted successfully',
+                $this->apiMeta()
+            );
+        } catch (\Exception $e) {
+            Log::error('[Contract] Gagal menghapus kontrak', [
+                'contract_id' => $contract->id,
+                'error' => $e->getMessage(),
+            ]);
+
             return $this->errorResponse('Unable to delete contract', 500, null, $this->apiMeta());
         }
-
-        return $this->successResponse(
-            new ContractResource($contract),
-            'Contract deleted successfully',
-            $this->apiMeta()
-        );
     }
 
     private function apiMeta(): array

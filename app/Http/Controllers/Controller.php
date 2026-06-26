@@ -32,7 +32,6 @@ abstract class Controller
             'status' => 'error',
             'message' => $message,
             'errors' => $errors,
-            'meta' => $meta,
         ], $status);
     }
 }
